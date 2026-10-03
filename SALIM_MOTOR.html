@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SALIM MOTOR - Sistem Bengkel & Laporan HPP Part</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @media print {
+      header, .nav-btn, button, #modal-edit-item { display: none !important; }
+      body { background: white !important; color: black !important; }
+      main { padding: 0 !important; max-width: 100% !important; }
+      #tab-laporan { display: block !important; box-shadow: none !important; padding: 0 !important; }
+      table { width: 100% !important; font-size: 10px !important; }
+      th, td { border: 1px solid #cbd5e1 !important; padding: 6px !important; }
+      th:last-child, td:last-child { display: none !important; }
+      .mobile-card-view { display: none !important; }
+      .desktop-table-view { display: table !important; }
+    }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans min-h-screen flex flex-col">
+
+  <!-- Header / Navbar (Mobile-Friendly & Desktop) -->
+  <header class="bg-slate-900 text-white p-3 sm:p-4 shadow-lg sticky top-0 z-20">
+    <div class="max-w-[95rem] mx-auto flex flex-col md:flex-row justify-between items-center gap-3">
+      <div class="flex items-center space-x-3 w-full md:w-auto justify-between md:justify-start">
+        <div class="flex items-center space-x-3">
+          <div class="bg-emerald-500 text-slate-900 p-2 rounded-lg font-black text-lg sm:text-xl">SM</div>
+          <div>
+            <h1 class="text-lg sm:text-xl font-bold tracking-wider text-emerald-400">SALIM MOTOR</h1>
+            <p class="text-[10px] sm:text-xs text-slate-300">Jl. P. Antasari No. 10 | WA: 088747782654</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Navigation Grid di HP, Flex di Desktop -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 md:flex gap-2 w-full md:w-auto">
+        <button onclick="switchTab('pos')" class="nav-btn bg-emerald-600 hover:bg-emerald-500 text-center py-2 px-3 rounded-lg text-xs sm:text-sm font-semibold transition shadow">Kasir (POS)</button>
+        <button onclick="switchTab('laporan')" class="nav-btn bg-slate-800 hover:bg-slate-700 text-center py-2 px-3 rounded-lg text-xs sm:text-sm font-semibold transition border border-slate-700">Laporan Harian</button>
+        <button onclick="switchTab('stok')" class="nav-btn bg-slate-800 hover:bg-slate-700 text-center py-2 px-3 rounded-lg text-xs sm:text-sm font-semibold transition border border-slate-700">Stok & Jasa</button>
+        <button onclick="switchTab('mekanik')" class="nav-btn bg-slate-800 hover:bg-slate-700 text-center py-2 px-3 rounded-lg text-xs sm:text-sm font-semibold transition border border-slate-700">Master Mekanik</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="p-3 sm:p-6 max-w-[95rem] mx-auto flex-1 w-full space-y-4">
+
+    <!-- KPI Summary Dashboard (2 Kolom di HP, 6 Kolom di Windows) -->
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3">
+      <div class="bg-white p-3 sm:p-4 rounded-xl shadow-sm border-l-4 border-slate-800">
+        <p class="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase">Total Motor</p>
+        <h3 id="stat-motor" class="text-sm sm:text-xl font-extrabold text-slate-800">0 Motor</h3>
+      </div>
+      <div class="bg-white p-3 sm:p-4 rounded-xl shadow-sm border-l-4 border-blue-500">
+        <p class="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase">Pendapatan Jasa</p>
+        <h3 id="stat-jasa" class="text-sm sm:text-xl font-extrabold text-blue-600">Rp 0</h3>
+      </div>
+      <div class="bg-white p-3 sm:p-4 rounded-xl shadow-sm border-l-4 border-indigo-500">
+        <p class="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase">Penjualan Part</p>
+        <h3 id="stat-part" class="text-sm sm:text-xl font-extrabold text-indigo-600">Rp 0</h3>
+      </div>
+      <div class="bg-white p-3 sm:p-4 rounded-xl shadow-sm border-l-4 border-rose-500">
+        <p class="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase">Modal Part (HPP)</p>
+        <h3 id="stat-hpp" class="text-sm sm:text-xl font-extrabold text-rose-600">Rp 0</h3>
+      </div>
+      <div class="bg-white p-3 sm:p-4 rounded-xl shadow-sm border-l-4 border-teal-500">
+        <p class="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase">Laba Sparepart</p>
+        <h3 id="stat-profit-part" class="text-sm sm:text-xl font-extrabold text-teal-600">Rp 0</h3>
+      </div>
+      <div class="bg-white p-3 sm:p-4 rounded-xl shadow-sm border-l-4 border-emerald-500">
+        <p class="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase">Grand Total Omzet</p>
+        <h3 id="stat-total" class="text-sm sm:text-xl font-extrabold text-emerald-600">Rp 0</h3>
+      </div>
+    </div>
+
+    <!-- TAB 1: KASIR / POS -->
+    <section id="tab-pos" class="bg-white p-4 sm:p-6 rounded-xl shadow-sm grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+      <!-- Form Input Kendaraan -->
+      <div class="lg:col-span-1 border-b lg:border-b-0 lg:border-r border-slate-200 pb-4 lg:pb-0 lg:pr-6 space-y-3">
+        <h2 class="text-md sm:text-lg font-bold text-slate-800 border-b pb-2 flex items-center gap-2">📝 Input Kendaraan</h2>
+        <div class="grid grid-cols-2 lg:grid-cols-1 gap-2 sm:gap-3">
+          <div>
+            <label class="text-xs font-semibold text-slate-600">Plat Nomor</label>
+            <input type="text" id="cust-plate" placeholder="B 1234 ABC" class="w-full mt-1 p-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 uppercase font-bold text-slate-700 text-sm">
+          </div>
+          <div>
+            <label class="text-xs font-semibold text-slate-600">Nama / Motor</label>
+            <input type="text" id="cust-name" placeholder="Bpk. Budi (Vario)" class="w-full mt-1 p-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 text-sm">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 lg:grid-cols-1 gap-2 sm:gap-3">
+          <div>
+            <label class="text-xs font-semibold text-slate-600">No. WhatsApp</label>
+            <input type="text" id="cust-wa" placeholder="088747782654" class="w-full mt-1 p-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 text-sm">
+          </div>
+          <div>
+            <label class="text-xs font-semibold text-slate-600">Metode Bayar</label>
+            <select id="payment-method" class="w-full mt-1 p-2 border rounded-lg bg-white text-sm">
+              <option value="Tunai">Tunai (Cash)</option>
+              <option value="QRIS">QRIS</option>
+              <option value="Transfer">Transfer Bank</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="text-xs font-semibold text-slate-600">Pilih Mekanik</label>
+          <select id="select-mekanik" class="w-full mt-1 p-2 border rounded-lg bg-white font-semibold text-slate-700 text-sm"></select>
+        </div>
+      </div>
+
+      <!-- Pemilihan Item & Cart -->
+      <div class="lg:col-span-2 space-y-4">
+        <h2 class="text-md sm:text-lg font-bold text-slate-800 border-b pb-2">🛒 Servis & Sparepart</h2>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50 p-3 sm:p-4 rounded-xl border">
+          <div>
+            <label class="text-xs font-bold text-slate-500 uppercase block mb-1">Pilih Jasa Servis</label>
+            <div class="flex gap-2">
+              <select id="select-jasa" class="flex-1 p-2 border rounded-lg text-xs sm:text-sm bg-white outline-none"></select>
+              <button onclick="addServiceToCart()" class="bg-blue-600 text-white px-3 py-2 rounded-lg text-xs font-semibold hover:bg-blue-700">+ Jasa</button>
+            </div>
+          </div>
+          <div>
+            <label class="text-xs font-bold text-slate-500 uppercase block mb-1">Pilih Sparepart & Oli</label>
+            <div class="flex gap-2">
+              <select id="select-part" class="flex-1 p-2 border rounded-lg text-xs sm:text-sm bg-white outline-none"></select>
+              <button onclick="addPartToCart()" class="bg-indigo-600 text-white px-3 py-2 rounded-lg text-xs font-semibold hover:bg-indigo-700">+ Part</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="border rounded-xl overflow-x-auto shadow-sm">
+          <table class="w-full text-left text-xs sm:text-sm min-w-[500px] sm:min-w-full">
+            <thead class="bg-slate-800 text-white uppercase text-[10px] sm:text-xs">
+              <tr>
+                <th class="p-2 sm:p-3">Tipe</th>
+                <th class="p-2 sm:p-3">Item Pengerjaan</th>
+                <th class="p-2 sm:p-3">Harga</th>
+                <th class="p-2 sm:p-3 text-center">Qty</th>
+                <th class="p-2 sm:p-3 text-right">Subtotal</th>
+                <th class="p-2 sm:p-3 text-center">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="cart-table-body" class="divide-y divide-slate-100">
+              <tr><td colspan="6" class="p-4 text-center text-slate-400">Belum ada item ditambahkan</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="flex flex-col sm:flex-row justify-between items-center bg-slate-900 text-white p-4 rounded-xl shadow-md gap-3">
+          <div class="text-xs space-y-1 w-full sm:w-auto">
+            <p class="text-slate-400">Total Biaya Jasa: <span id="cart-total-jasa" class="font-bold text-blue-400">Rp 0</span></p>
+            <p class="text-slate-400">Total Biaya Part: <span id="cart-total-part" class="font-bold text-indigo-400">Rp 0</span></p>
+            <p class="text-amber-400 font-semibold">Estimasi Komisi Mekanik: <span id="cart-total-komisi">Rp 0</span></p>
+          </div>
+          <div class="text-right w-full sm:w-auto">
+            <p class="text-[10px] sm:text-xs text-slate-400 uppercase font-semibold">Grand Total Biaya</p>
+            <p id="cart-grand-total" class="text-2xl sm:text-3xl font-extrabold text-emerald-400">Rp 0</p>
+          </div>
+        </div>
+
+        <div class="flex gap-2 justify-end">
+          <button onclick="resetCartForm()" class="bg-slate-200 text-slate-700 px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold hover:bg-slate-300">Reset Form</button>
+          <button onclick="saveTransaction()" class="bg-emerald-600 text-white px-6 py-2 rounded-lg text-xs sm:text-sm font-bold hover:bg-emerald-500 shadow-md">Simpan Transaksi</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: LAPORAN HARIAN -->
+    <section id="tab-laporan" class="bg-white p-4 sm:p-6 rounded-xl shadow-sm hidden space-y-4">
+      <div class="flex flex-wrap justify-between items-center border-b pb-3 gap-2">
+        <div>
+          <h2 class="text-md sm:text-lg font-bold text-slate-800">Laporan Transaksi Harian</h2>
+          <p class="text-xs text-slate-500">Rincian pendapatan, HPP modal, dan keutungan bengkel</p>
+        </div>
+        <div class="flex gap-2 w-full sm:w-auto">
+          <button onclick="exportToCSV()" class="flex-1 sm:flex-none bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-emerald-600">📥 Export CSV</button>
+          <button onclick="window.print()" class="flex-1 sm:flex-none bg-slate-800 text-white px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-slate-700">🖨️ Cetak</button>
+        </div>
+      </div>
+
+      <!-- TAMPILAN 1: UNTUK LAPTOP / WINDOWS (TABEL UTUH) -->
+      <div class="hidden md:block overflow-x-auto rounded-xl border border-slate-200 shadow-sm desktop-table-view">
+        <table class="w-full text-left text-xs border-collapse">
+          <thead>
+            <tr class="bg-slate-900 text-white uppercase">
+              <th class="p-3">Nota / Jam</th>
+              <th class="p-3">Plat / Pelanggan</th>
+              <th class="p-3">Mekanik</th>
+              <th class="p-3">Rincian Jasa</th>
+              <th class="p-3 text-right">Total Jasa</th>
+              <th class="p-3">Rincian Part</th>
+              <th class="p-3 text-right text-rose-300">Modal Part (HPP)</th>
+              <th class="p-3 text-right text-indigo-300">Jual Part</th>
+              <th class="p-3 text-right text-teal-300">Laba Part</th>
+              <th class="p-3 text-right text-amber-300">Komisi Mekanik</th>
+              <th class="p-3 text-right">Grand Total</th>
+              <th class="p-3 text-center">Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="laporan-table-body" class="divide-y divide-slate-200"></tbody>
+          <tfoot class="bg-slate-100 font-bold border-t-2 border-slate-800 text-slate-900">
+            <tr>
+              <td colspan="4" class="p-3 text-right uppercase">TOTAL KESELURUHAN:</td>
+              <td id="foot-total-jasa" class="p-3 text-right text-blue-600">Rp 0</td>
+              <td class="p-3"></td>
+              <td id="foot-total-hpp" class="p-3 text-right text-rose-600">Rp 0</td>
+              <td id="foot-total-jual" class="p-3 text-right text-indigo-600">Rp 0</td>
+              <td id="foot-total-laba" class="p-3 text-right text-teal-600">Rp 0</td>
+              <td id="foot-total-komisi" class="p-3 text-right text-amber-600">Rp 0</td>
+              <td id="foot-grand-total" class="p-3 text-right text-emerald-600 font-black text-sm">Rp 0</td>
+              <td class="p-3"></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <!-- TAMPILAN 2: UNTUK HP / MOBILE (KARTU / CARD VIEW) -->
+      <div id="laporan-mobile-cards" class="block md:hidden space-y-3 mobile-card-view"></div>
+    </section>
+
+    <!-- TAB 3: STOK & JASA -->
+    <section id="tab-stok" class="bg-white p-4 sm:p-6 rounded-xl shadow-sm hidden grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div class="space-y-3">
+        <h2 class="text-md sm:text-lg font-bold text-slate-800 border-b pb-2">Katalog Jasa Servis</h2>
+        <div class="flex gap-2">
+          <input type="text" id="new-jasa-name" placeholder="Nama Jasa" class="p-2 border rounded-lg text-xs sm:text-sm flex-1">
+          <input type="number" id="new-jasa-price" placeholder="Tarif (Rp)" class="p-2 border rounded-lg text-xs sm:text-sm w-28">
+          <button onclick="addMasterJasa()" class="bg-emerald-600 text-white px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold hover:bg-emerald-500">+ Tambah</button>
+        </div>
+        <div class="border rounded-xl overflow-hidden max-h-80 overflow-y-auto">
+          <table class="w-full text-xs sm:text-sm text-left">
+            <thead class="bg-slate-100 uppercase text-[10px] sm:text-xs">
+              <tr><th class="p-2 sm:p-3">Nama Jasa</th><th class="p-2 sm:p-3 text-right">Tarif Jasa</th><th class="p-2 sm:p-3 text-center">Aksi</th></tr>
+            </thead>
+            <tbody id="master-jasa-list" class="divide-y"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="space-y-3">
+        <h2 class="text-md sm:text-lg font-bold text-slate-800 border-b pb-2">Stok Sparepart & Oli</h2>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <input type="text" id="new-part-name" placeholder="Nama Barang" class="p-2 border rounded-lg text-xs sm:text-sm col-span-2 sm:col-span-1">
+          <input type="number" id="new-part-cost" placeholder="Harga Modal" class="p-2 border rounded-lg text-xs sm:text-sm">
+          <input type="number" id="new-part-price" placeholder="Harga Jual" class="p-2 border rounded-lg text-xs sm:text-sm">
+          <input type="number" id="new-part-stock" placeholder="Stok" class="p-2 border rounded-lg text-xs sm:text-sm">
+        </div>
+        <button onclick="addMasterPart()" class="bg-emerald-600 text-white px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold hover:bg-emerald-500 w-full">+ Tambah Sparepart Baru</button>
+
+        <div class="border rounded-xl overflow-x-auto max-h-80 overflow-y-auto">
+          <table class="w-full text-xs sm:text-sm text-left">
+            <thead class="bg-slate-100 uppercase text-[10px] sm:text-xs">
+              <tr>
+                <th class="p-2 sm:p-3">Nama Barang</th>
+                <th class="p-2 sm:p-3 text-right">Harga Modal</th>
+                <th class="p-2 sm:p-3 text-right">Harga Jual</th>
+                <th class="p-2 sm:p-3 text-center">Stok</th>
+                <th class="p-2 sm:p-3 text-center">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="master-part-list" class="divide-y"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 4: MASTER MEKANIK -->
+    <section id="tab-mekanik" class="bg-white p-4 sm:p-6 rounded-xl shadow-sm hidden space-y-3 max-w-3xl mx-auto">
+      <h2 class="text-md sm:text-lg font-bold text-slate-800 border-b pb-2">Manajemen Data Mekanik</h2>
+      <div class="flex gap-2">
+        <input type="text" id="new-mekanik-name" placeholder="Nama Mekanik" class="p-2 border rounded-lg text-xs sm:text-sm flex-1">
+        <input type="number" id="new-mekanik-rate" placeholder="Komisi (%)" value="30" class="p-2 border rounded-lg text-xs sm:text-sm w-24">
+        <button onclick="addMasterMekanik()" class="bg-emerald-600 text-white px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold hover:bg-emerald-500">+ Tambah</button>
+      </div>
+
+      <div class="border rounded-xl overflow-hidden">
+        <table class="w-full text-xs sm:text-sm text-left">
+          <thead class="bg-slate-100 uppercase text-[10px] sm:text-xs">
+            <tr>
+              <th class="p-2 sm:p-3">Nama Mekanik</th>
+              <th class="p-2 sm:p-3 text-center">Persentase Komisi (%)</th>
+              <th class="p-2 sm:p-3 text-center">Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="master-mekanik-list" class="divide-y"></tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MODAL EDIT ITEM -->
+  <div id="modal-edit-item" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-5 space-y-4">
+      <h3 id="modal-edit-item-title" class="text-md sm:text-lg font-bold text-slate-800 border-b pb-2">Edit Data Item</h3>
+      <input type="hidden" id="edit-item-type">
+      <input type="hidden" id="edit-item-id">
+      <div id="edit-item-fields" class="space-y-3 text-xs sm:text-sm"></div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button onclick="closeEditItemModal()" class="bg-slate-200 text-slate-700 px-4 py-2 rounded-lg font-semibold text-xs sm:text-sm">Batal</button>
+        <button onclick="saveItemChanges()" class="bg-emerald-600 text-white px-5 py-2 rounded-lg font-bold hover:bg-emerald-500 text-xs sm:text-sm">Simpan</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // State Management
+    let masterJasa = JSON.parse(localStorage.getItem('sm_jasa_v4')) || [
+      { id: 1, name: 'Servis Ringan / Tune Up', price: 50000 },
+      { id: 2, name: 'Servis CVT Complete', price: 75000 },
+      { id: 3, name: 'Ganti Kampas Rem', price: 20000 }
+    ];
+
+    let masterPart = JSON.parse(localStorage.getItem('sm_part_v4')) || [
+      { id: 1, name: 'Oli Shell AX7 1L', costPrice: 52000, price: 65000, stock: 12 },
+      { id: 2, name: 'Kampas Rem Depan Honda', costPrice: 25000, price: 35000, stock: 8 },
+      { id: 3, name: 'Roller Set Vario 150', costPrice: 48000, price: 65000, stock: 2 }
+    ];
+
+    let masterMekanik = JSON.parse(localStorage.getItem('sm_mekanik_v4')) || [
+      { id: 1, name: 'Budi (Senior)', rate: 35 },
+      { id: 2, name: 'Agus', rate: 30 }
+    ];
+
+    let transactions = JSON.parse(localStorage.getItem('sm_trx_v4')) || [];
+    let cart = [];
+
+    function saveState() {
+      localStorage.setItem('sm_jasa_v4', JSON.stringify(masterJasa));
+      localStorage.setItem('sm_part_v4', JSON.stringify(masterPart));
+      localStorage.setItem('sm_mekanik_v4', JSON.stringify(masterMekanik));
+      localStorage.setItem('sm_trx_v4', JSON.stringify(transactions));
+      renderAll();
+    }
+
+    function switchTab(tab) {
+      ['pos', 'laporan', 'stok', 'mekanik'].forEach(t => document.getElementById(`tab-${t}`).classList.add('hidden'));
+      document.getElementById(`tab-${tab}`).classList.remove('hidden');
+    }
+
+    function formatRp(num) {
+      return 'Rp ' + Number(num || 0).toLocaleString('id-ID');
+    }
+
+    function populateDropdowns() {
+      const sj = document.getElementById('select-jasa');
+      const sp = document.getElementById('select-part');
+      const sm = document.getElementById('select-mekanik');
+
+      sj.innerHTML = '<option value="">-- Pilih Jasa --</option>' + masterJasa.map(j => `<option value="${j.id}">${j.name} (${formatRp(j.price)})</option>`).join('');
+      sp.innerHTML = '<option value="">-- Pilih Part --</option>' + masterPart.map(p => `<option value="${p.id}">${p.name} - Stok:${p.stock} (${formatRp(p.price)})</option>`).join('');
+      sm.innerHTML = '<option value="">-- Pilih Mekanik --</option>' + masterMekanik.map(m => `<option value="${m.id}">${m.name} (${m.rate}%)</option>`).join('');
+    }
+
+    // --- POS CART ---
+    function addServiceToCart() {
+      const id = parseInt(document.getElementById('select-jasa').value);
+      const item = masterJasa.find(j => j.id === id);
+      if (!item) return;
+      cart.push({ type: 'service', id: item.id, name: item.name, price: item.price, qty: 1 });
+      renderCart();
+    }
+
+    function addPartToCart() {
+      const id = parseInt(document.getElementById('select-part').value);
+      const item = masterPart.find(p => p.id === id);
+      if (!item) return;
+
+      const existing = cart.find(c => c.type === 'product' && c.id === item.id);
+      const currentQty = existing ? existing.qty : 0;
+
+      if (currentQty + 1 > item.stock) {
+        alert('Stok barang tidak mencukupi!');
+        return;
+      }
+
+      if (existing) existing.qty += 1;
+      else cart.push({ type: 'product', id: item.id, name: item.name, costPrice: item.costPrice || 0, price: item.price, qty: 1 });
+      renderCart();
+    }
+
+    function updateCartQty(index, delta) {
+      const item = cart[index];
+      if (item.type === 'product') {
+        const p = masterPart.find(x => x.id === item.id);
+        if (delta > 0 && item.qty + delta > p.stock) {
+          alert('Stok barang tidak mencukupi!');
+          return;
+        }
+      }
+      item.qty += delta;
+      if (item.qty <= 0) cart.splice(index, 1);
+      renderCart();
+    }
+
+    function renderCart() {
+      const tbody = document.getElementById('cart-table-body');
+      let totalJasa = 0, totalPart = 0;
+
+      if (cart.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-slate-400">Belum ada item ditambahkan</td></tr>';
+      } else {
+        tbody.innerHTML = cart.map((item, idx) => {
+          const subtotal = item.price * item.qty;
+          if (item.type === 'service') totalJasa += subtotal;
+          else totalPart += subtotal;
+
+          return `
+            <tr class="border-b">
+              <td class="p-2 sm:p-3"><span class="px-1.5 py-0.5 rounded text-[9px] font-bold text-white ${item.type === 'service' ? 'bg-blue-600' : 'bg-indigo-600'}">${item.type === 'service' ? 'JASA' : 'PART'}</span></td>
+              <td class="p-2 sm:p-3 font-semibold text-slate-800 text-xs sm:text-sm">${item.name}</td>
+              <td class="p-2 sm:p-3 text-xs sm:text-sm">${formatRp(item.price)}</td>
+              <td class="p-2 sm:p-3 text-center">
+                <button onclick="updateCartQty(${idx}, -1)" class="px-1.5 bg-slate-200 rounded font-bold">-</button>
+                <span class="mx-1 font-bold">${item.qty}</span>
+                <button onclick="updateCartQty(${idx}, 1)" class="px-1.5 bg-slate-200 rounded font-bold">+</button>
+              </td>
+              <td class="p-2 sm:p-3 text-right font-bold text-xs sm:text-sm">${formatRp(subtotal)}</td>
+              <td class="p-2 sm:p-3 text-center"><button onclick="cart.splice(${idx},1); renderCart();" class="text-red-500 font-bold">✕</button></td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      const mId = parseInt(document.getElementById('select-mekanik').value);
+      const melek = masterMekanik.find(m => m.id === mId);
+      const komisi = melek ? (totalJasa * melek.rate / 100) : 0;
+
+      document.getElementById('cart-total-jasa').innerText = formatRp(totalJasa);
+      document.getElementById('cart-total-part').innerText = formatRp(totalPart);
+      document.getElementById('cart-total-komisi').innerText = formatRp(komisi);
+      document.getElementById('cart-grand-total').innerText = formatRp(totalJasa + totalPart);
+    }
+
+    document.getElementById('select-mekanik').addEventListener('change', renderCart);
+
+    function saveTransaction() {
+      const plateInput = document.getElementById('cust-plate').value.trim();
+      const nameInput = document.getElementById('cust-name').value.trim();
+      const wa = document.getElementById('cust-wa').value.trim();
+      const mId = parseInt(document.getElementById('select-mekanik').value);
+      const payment = document.getElementById('payment-method').value;
+
+      const mekanik = masterMekanik.find(m => m.id === mId);
+
+      if (cart.length === 0 && !plateInput && !nameInput) {
+        alert('Mohon isi data plat nomor/nama atau tambahkan item ke keranjang!');
+        return;
+      }
+
+      cart.forEach(item => {
+        if (item.type === 'product') {
+          const p = masterPart.find(x => x.id === item.id);
+          if (p) p.stock -= item.qty;
+        }
+      });
+
+      const totalService = cart.filter(c => c.type === 'service').reduce((a, b) => a + (b.price * b.qty), 0);
+      const totalProduct = cart.filter(c => c.type === 'product').reduce((a, b) => a + (b.price * b.qty), 0);
+      const totalCostProduct = cart.filter(c => c.type === 'product').reduce((a, b) => a + ((b.costPrice || 0) * b.qty), 0);
+      
+      const mekanikCommission = mekanik ? ((totalService * mekanik.rate) / 100) : 0;
+
+      const newTrx = {
+        invoice: 'SM-' + Date.now().toString().slice(-6),
+        date: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+        plate: plateInput ? plateInput.toUpperCase() : 'TANPA PLAT',
+        name: nameInput || 'Pelanggan Umum',
+        wa: wa || '-',
+        mekanikName: mekanik ? mekanik.name : '-',
+        mekanikCommission: mekanikCommission,
+        payment: payment,
+        items: [...cart],
+        totalService: totalService,
+        totalProduct: totalProduct,
+        totalCostProduct: totalCostProduct,
+        grandTotal: totalService + totalProduct
+      };
+
+      transactions.unshift(newTrx);
+      saveState();
+      resetCartForm();
+      alert('Transaksi berhasil disimpan!');
+    }
+
+    function resetCartForm() {
+      cart = [];
+      document.getElementById('cust-plate').value = '';
+      document.getElementById('cust-name').value = '';
+      document.getElementById('cust-wa').value = '';
+      document.getElementById('select-mekanik').value = '';
+      renderCart();
+    }
+
+    // --- LAPORAN HARIAN (RENDER TABLE DESKTOP + CARDS MOBILE) ---
+    function renderLaporan() {
+      const tbody = document.getElementById('laporan-table-body');
+      const mobileCards = document.getElementById('laporan-mobile-cards');
+      
+      let grandTotalJasa = 0, grandTotalHPP = 0, grandTotalJual = 0, grandTotalLaba = 0, grandTotalKomisi = 0, grandTotalOmzet = 0;
+
+      if (transactions.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="12" class="p-4 text-center text-slate-400">Belum ada transaksi</td></tr>';
+        mobileCards.innerHTML = '<div class="p-4 text-center text-slate-400 bg-white rounded-xl border">Belum ada transaksi</div>';
+      } else {
+        // Tampilan Desktop (Tabel)
+        tbody.innerHTML = transactions.map((trx, idx) => {
+          const jasaList = trx.items.filter(i => i.type === 'service').map(i => `• ${i.name}`).join('<br>') || '-';
+          const partList = trx.items.filter(i => i.type === 'product').map(i => `• ${i.name} (${i.qty}x)`).join('<br>') || '-';
+          const labaPart = (trx.totalProduct || 0) - (trx.totalCostProduct || 0);
+
+          grandTotalJasa += (trx.totalService || 0);
+          grandTotalHPP += (trx.totalCostProduct || 0);
+          grandTotalJual += (trx.totalProduct || 0);
+          grandTotalLaba += labaPart;
+          grandTotalKomisi += (trx.mekanikCommission || 0);
+          grandTotalOmzet += (trx.grandTotal || 0);
+
+          return `
+            <tr class="hover:bg-slate-50 border-b">
+              <td class="p-3 font-mono font-bold text-slate-700">${trx.invoice}<br><span class="text-[10px] text-slate-400">${trx.date}</span></td>
+              <td class="p-3"><span class="font-extrabold text-slate-900">${trx.plate}</span><br><span class="text-[10px] text-slate-500">${trx.name}</span></td>
+              <td class="p-3 font-semibold text-slate-700">${trx.mekanikName || '-'}</td>
+              <td class="p-3 text-[11px]">${jasaList}</td>
+              <td class="p-3 text-right text-blue-600 font-semibold">${formatRp(trx.totalService)}</td>
+              <td class="p-3 text-[11px]">${partList}</td>
+              <td class="p-3 text-right text-rose-600 font-semibold">${formatRp(trx.totalCostProduct || 0)}</td>
+              <td class="p-3 text-right text-indigo-600 font-bold">${formatRp(trx.totalProduct)}</td>
+              <td class="p-3 text-right text-teal-600 font-bold bg-teal-50/50">${formatRp(labaPart)}</td>
+              <td class="p-3 text-right text-amber-600 font-bold">${formatRp(trx.mekanikCommission || 0)}</td>
+              <td class="p-3 text-right font-extrabold text-emerald-600">${formatRp(trx.grandTotal)}</td>
+              <td class="p-3 text-center">
+                <button onclick="deleteTransaction(${idx})" class="bg-red-500 hover:bg-red-600 text-white p-1 rounded text-xs">🗑️</button>
+              </td>
+            </tr>
+          `;
+        }).join('');
+
+        // Tampilan HP / Mobile (Card View)
+        mobileCards.innerHTML = transactions.map((trx, idx) => {
+          const labaPart = (trx.totalProduct || 0) - (trx.totalCostProduct || 0);
+          return `
+            <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-2 text-xs shadow-sm">
+              <div class="flex justify-between items-start border-b pb-2">
+                <div>
+                  <span class="font-extrabold text-slate-900 text-sm">${trx.plate}</span>
+                  <p class="text-[10px] text-slate-500">${trx.name} • ${trx.invoice} (${trx.date})</p>
+                </div>
+                <button onclick="deleteTransaction(${idx})" class="text-red-500 bg-red-100 px-2 py-0.5 rounded text-[10px] font-bold">Hapus</button>
+              </div>
+              <div class="grid grid-cols-2 gap-1 text-[11px]">
+                <p><span class="text-slate-400">Mekanik:</span> <b>${trx.mekanikName}</b></p>
+                <p><span class="text-slate-400">Bayar:</span> <b>${trx.payment}</b></p>
+                <p><span class="text-slate-400">Jasa Servis:</span> <b class="text-blue-600">${formatRp(trx.totalService)}</b></p>
+                <p><span class="text-slate-400">Penjualan Part:</span> <b class="text-indigo-600">${formatRp(trx.totalProduct)}</b></p>
+                <p><span class="text-slate-400">Modal Part (HPP):</span> <b class="text-rose-600">${formatRp(trx.totalCostProduct)}</b></p>
+                <p><span class="text-slate-400">Laba Part:</span> <b class="text-teal-600">${formatRp(labaPart)}</b></p>
+              </div>
+              <div class="flex justify-between items-center bg-emerald-100 text-emerald-900 p-2 rounded-lg font-bold border border-emerald-200">
+                <span>Grand Total:</span>
+                <span class="text-sm">${formatRp(trx.grandTotal)}</span>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      document.getElementById('foot-total-jasa').innerText = formatRp(grandTotalJasa);
+      document.getElementById('foot-total-hpp').innerText = formatRp(grandTotalHPP);
+      document.getElementById('foot-total-jual').innerText = formatRp(grandTotalJual);
+      document.getElementById('foot-total-laba').innerText = formatRp(grandTotalLaba);
+      document.getElementById('foot-total-komisi').innerText = formatRp(grandTotalKomisi);
+      document.getElementById('foot-grand-total').innerText = formatRp(grandTotalOmzet);
+    }
+
+    // --- OTHER MASTER RENDERING ---
+    function renderMaster() {
+      document.getElementById('master-jasa-list').innerHTML = masterJasa.map((j, idx) => `
+        <tr class="hover:bg-slate-50">
+          <td class="p-2 sm:p-3 font-semibold">${j.name}</td>
+          <td class="p-2 sm:p-3 text-right font-bold text-slate-700">${formatRp(j.price)}</td>
+          <td class="p-2 sm:p-3 text-center">
+            <button onclick="openEditModal('jasa', ${j.id})" class="text-amber-600 font-semibold mr-1">Edit</button>
+            <button onclick="masterJasa.splice(${idx},1); saveState();" class="text-red-500 font-bold">Hapus</button>
+          </td>
+        </tr>
+      `).join('');
+
+      document.getElementById('master-part-list').innerHTML = masterPart.map((p, idx) => `
+        <tr class="hover:bg-slate-50">
+          <td class="p-2 sm:p-3 font-semibold">${p.name}</td>
+          <td class="p-2 sm:p-3 text-right text-slate-500">${formatRp(p.costPrice || 0)}</td>
+          <td class="p-2 sm:p-3 text-right font-bold text-slate-800">${formatRp(p.price)}</td>
+          <td class="p-2 sm:p-3 text-center"><span class="px-1.5 py-0.5 rounded font-bold ${p.stock <= 3 ? 'bg-red-100 text-red-600' : 'bg-slate-100 text-slate-700'}">${p.stock}</span></td>
+          <td class="p-2 sm:p-3 text-center">
+            <button onclick="openEditModal('part', ${p.id})" class="text-amber-600 font-semibold mr-1">Edit</button>
+            <button onclick="masterPart.splice(${idx},1); saveState();" class="text-red-500 font-bold">Hapus</button>
+          </td>
+        </tr>
+      `).join('');
+
+      document.getElementById('master-mekanik-list').innerHTML = masterMekanik.map((m, idx) => `
+        <tr class="hover:bg-slate-50">
+          <td class="p-2 sm:p-3 font-semibold text-slate-800">${m.name}</td>
+          <td class="p-2 sm:p-3 text-center font-bold text-amber-600">${m.rate}%</td>
+          <td class="p-2 sm:p-3 text-center"><button onclick="masterMekanik.splice(${idx},1); saveState();" class="text-red-500 font-bold">Hapus</button></td>
+        </tr>
+      `).join('');
+    }
+
+    function addMasterJasa() {
+      const name = document.getElementById('new-jasa-name').value.trim();
+      const price = parseFloat(document.getElementById('new-jasa-price').value);
+      if (!name || isNaN(price) || price <= 0) return alert('Isi data dengan benar!');
+      masterJasa.push({ id: Date.now(), name, price });
+      saveState();
+      document.getElementById('new-jasa-name').value = '';
+      document.getElementById('new-jasa-price').value = '';
+    }
+
+    function addMasterPart() {
+      const name = document.getElementById('new-part-name').value.trim();
+      const costPrice = parseFloat(document.getElementById('new-part-cost').value) || 0;
+      const price = parseFloat(document.getElementById('new-part-price').value);
+      const stock = parseInt(document.getElementById('new-part-stock').value);
+      if (!name || isNaN(price) || isNaN(stock)) return alert('Isi data dengan benar!');
+      masterPart.push({ id: Date.now(), name, costPrice, price, stock });
+      saveState();
+      document.getElementById('new-part-name').value = '';
+      document.getElementById('new-part-cost').value = '';
+      document.getElementById('new-part-price').value = '';
+      document.getElementById('new-part-stock').value = '';
+    }
+
+    function addMasterMekanik() {
+      const name = document.getElementById('new-mekanik-name').value.trim();
+      const rate = parseFloat(document.getElementById('new-mekanik-rate').value);
+      if (!name || isNaN(rate)) return alert('Isi data dengan benar!');
+      masterMekanik.push({ id: Date.now(), name, rate });
+      saveState();
+      document.getElementById('new-mekanik-name').value = '';
+      document.getElementById('new-mekanik-rate').value = '30';
+    }
+
+    function deleteTransaction(index) {
+      if (!confirm('Hapus transaksi ini? Stok barang akan dikembalikan.')) return;
+      const trx = transactions[index];
+      trx.items.forEach(item => {
+        if (item.type === 'product') {
+          const p = masterPart.find(x => x.id === item.id);
+          if (p) p.stock += item.qty;
+        }
+      });
+      transactions.splice(index, 1);
+      saveState();
+    }
+
+    function renderStats() {
+      const totalMotor = transactions.length;
+      const totalJasa = transactions.reduce((sum, t) => sum + (t.totalService || 0), 0);
+      const totalPart = transactions.reduce((sum, t) => sum + (t.totalProduct || 0), 0);
+      const totalHPP = transactions.reduce((sum, t) => sum + (t.totalCostProduct || 0), 0);
+      const totalProfitPart = totalPart - totalHPP;
+      const grandTotal = transactions.reduce((sum, t) => sum + (t.grandTotal || 0), 0);
+
+      document.getElementById('stat-motor').innerText = `${totalMotor} Motor`;
+      document.getElementById('stat-jasa').innerText = formatRp(totalJasa);
+      document.getElementById('stat-part').innerText = formatRp(totalPart);
+      document.getElementById('stat-hpp').innerText = formatRp(totalHPP);
+      document.getElementById('stat-profit-part').innerText = formatRp(totalProfitPart);
+      document.getElementById('stat-total').innerText = formatRp(grandTotal);
+    }
+
+    function renderAll() {
+      populateDropdowns();
+      renderMaster();
+      renderLaporan();
+      renderStats();
+    }
+
+    function openEditModal(type, id) {
+      document.getElementById('edit-item-type').value = type;
+      document.getElementById('edit-item-id').value = id;
+      const fields = document.getElementById('edit-item-fields');
+
+      if (type === 'jasa') {
+        const item = masterJasa.find(j => j.id === id);
+        document.getElementById('modal-edit-item-title').innerText = 'Edit Data Jasa';
+        fields.innerHTML = `
+          <div><label class="font-semibold text-slate-600">Nama Jasa</label><input type="text" id="edit-field-1" value="${item.name}" class="w-full p-2 border rounded-lg"></div>
+          <div><label class="font-semibold text-slate-600">Tarif Jasa (Rp)</label><input type="number" id="edit-field-2" value="${item.price}" class="w-full p-2 border rounded-lg"></div>
+        `;
+      } else {
+        const item = masterPart.find(p => p.id === id);
+        document.getElementById('modal-edit-item-title').innerText = 'Edit Sparepart & Stok';
+        fields.innerHTML = `
+          <div><label class="font-semibold text-slate-600">Nama Barang</label><input type="text" id="edit-field-1" value="${item.name}" class="w-full p-2 border rounded-lg"></div>
+          <div class="grid grid-cols-2 gap-2">
+            <div><label class="font-semibold text-slate-600">Modal (Rp)</label><input type="number" id="edit-field-2" value="${item.costPrice || 0}" class="w-full p-2 border rounded-lg"></div>
+            <div><label class="font-semibold text-slate-600">Jual (Rp)</label><input type="number" id="edit-field-3" value="${item.price}" class="w-full p-2 border rounded-lg"></div>
+          </div>
+          <div><label class="font-semibold text-slate-600">Stok</label><input type="number" id="edit-field-4" value="${item.stock}" class="w-full p-2 border rounded-lg font-bold text-blue-600"></div>
+        `;
+      }
+      document.getElementById('modal-edit-item').classList.remove('hidden');
+    }
+
+    function closeEditItemModal() { document.getElementById('modal-edit-item').classList.add('hidden'); }
+
+    function saveItemChanges() {
+      const type = document.getElementById('edit-item-type').value;
+      const id = parseInt(document.getElementById('edit-item-id').value);
+
+      if (type === 'jasa') {
+        const item = masterJasa.find(j => j.id === id);
+        item.name = document.getElementById('edit-field-1').value;
+        item.price = parseFloat(document.getElementById('edit-field-2').value) || 0;
+      } else {
+        const item = masterPart.find(p => p.id === id);
+        item.name = document.getElementById('edit-field-1').value;
+        item.costPrice = parseFloat(document.getElementById('edit-field-2').value) || 0;
+        item.price = parseFloat(document.getElementById('edit-field-3').value) || 0;
+        item.stock = parseInt(document.getElementById('edit-field-4').value) || 0;
+      }
+
+      saveState();
+      closeEditItemModal();
+    }
+
+    function exportToCSV() {
+      if (transactions.length === 0) return alert('Belum ada transaksi!');
+      let csv = 'Nota,Waktu,Plat,Pelanggan,Mekanik,Total Jasa,Modal Part (HPP),Jual Part,Laba Part,Komisi Mekanik,Grand Total,Metode Bayar\n';
+      transactions.forEach(t => {
+        const labaPart = (t.totalProduct || 0) - (t.totalCostProduct || 0);
+        csv += `"${t.invoice}","${t.date}","${t.plate}","${t.name}","${t.mekanikName}",${t.totalService},${t.totalCostProduct || 0},${t.totalProduct},${labaPart},${t.mekanikCommission || 0},${t.grandTotal},"${t.payment}"\n`;
+      });
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.setAttribute('download', `Laporan_Salim_Motor_${new Date().toISOString().slice(0,10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    renderAll();
+  </script>
+</body>
+</html>
