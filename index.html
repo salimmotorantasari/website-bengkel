@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SALIM MOTOR - Sistem Bengkel & Laporan HPP Part</title>
+  <title>SALIM MOTOR - Sistem Bengkel </title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     @media print {
@@ -46,7 +46,7 @@
 
   <main class="p-3 sm:p-6 max-w-[95rem] mx-auto flex-1 w-full space-y-4">
 
-    <!-- KPI Summary Dashboard (2 Kolom di HP, 6 Kolom di Windows) -->
+    <!-- KPI Summary Dashboard -->
     <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3">
       <div class="bg-white p-3 sm:p-4 rounded-xl shadow-sm border-l-4 border-slate-800">
         <p class="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase">Total Motor</p>
@@ -76,7 +76,6 @@
 
     <!-- TAB 1: KASIR / POS -->
     <section id="tab-pos" class="bg-white p-4 sm:p-6 rounded-xl shadow-sm grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-      <!-- Form Input Kendaraan -->
       <div class="lg:col-span-1 border-b lg:border-b-0 lg:border-r border-slate-200 pb-4 lg:pb-0 lg:pr-6 space-y-3">
         <h2 class="text-md sm:text-lg font-bold text-slate-800 border-b pb-2 flex items-center gap-2">📝 Input Kendaraan</h2>
         <div class="grid grid-cols-2 lg:grid-cols-1 gap-2 sm:gap-3">
@@ -109,7 +108,6 @@
         </div>
       </div>
 
-      <!-- Pemilihan Item & Cart -->
       <div class="lg:col-span-2 space-y-4">
         <h2 class="text-md sm:text-lg font-bold text-slate-800 border-b pb-2">🛒 Servis & Sparepart</h2>
         
@@ -180,7 +178,6 @@
         </div>
       </div>
 
-      <!-- TAMPILAN 1: UNTUK LAPTOP / WINDOWS (TABEL UTUH) -->
       <div class="hidden md:block overflow-x-auto rounded-xl border border-slate-200 shadow-sm desktop-table-view">
         <table class="w-full text-left text-xs border-collapse">
           <thead>
@@ -216,7 +213,6 @@
         </table>
       </div>
 
-      <!-- TAMPILAN 2: UNTUK HP / MOBILE (KARTU / CARD VIEW) -->
       <div id="laporan-mobile-cards" class="block md:hidden space-y-3 mobile-card-view"></div>
     </section>
 
@@ -304,6 +300,26 @@
       </div>
     </div>
   </div>
+
+  <!-- INTEGRASI FIREBASE & KODE SISTEM -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+
+    // Konfigurasi Firebase dari proyek Anda
+    const firebaseConfig = {
+      apiKey: "AIzaSyBuDJBMCiZrS5bffHxNwCFZrgeaTSyesqs",
+      authDomain: "salimmotor-57409.firebaseapp.com",
+      projectId: "salimmotor-57409",
+      storageBucket: "salimmotor-57409.firebasestorage.app",
+      messagingSenderId: "83565139973",
+      appId: "1:83565139973:web:d2771a6d0f7b73b05b646c",
+      measurementId: "G-C5XS8MWRXZ"
+    };
+
+    // Inisialisasi Firebase App
+    const app = initializeApp(firebaseConfig);
+    console.log("Firebase berhasil diinisialisasi untuk Salim Motor!");
+  </script>
 
   <script>
     // State Management
@@ -494,7 +510,7 @@
       renderCart();
     }
 
-    // --- LAPORAN HARIAN (RENDER TABLE DESKTOP + CARDS MOBILE) ---
+    // --- LAPORAN HARIAN ---
     function renderLaporan() {
       const tbody = document.getElementById('laporan-table-body');
       const mobileCards = document.getElementById('laporan-mobile-cards');
@@ -505,7 +521,6 @@
         tbody.innerHTML = '<tr><td colspan="12" class="p-4 text-center text-slate-400">Belum ada transaksi</td></tr>';
         mobileCards.innerHTML = '<div class="p-4 text-center text-slate-400 bg-white rounded-xl border">Belum ada transaksi</div>';
       } else {
-        // Tampilan Desktop (Tabel)
         tbody.innerHTML = transactions.map((trx, idx) => {
           const jasaList = trx.items.filter(i => i.type === 'service').map(i => `• ${i.name}`).join('<br>') || '-';
           const partList = trx.items.filter(i => i.type === 'product').map(i => `• ${i.name} (${i.qty}x)`).join('<br>') || '-';
@@ -538,7 +553,6 @@
           `;
         }).join('');
 
-        // Tampilan HP / Mobile (Card View)
         mobileCards.innerHTML = transactions.map((trx, idx) => {
           const labaPart = (trx.totalProduct || 0) - (trx.totalCostProduct || 0);
           return `
