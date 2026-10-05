@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SALIM MOTOR - Sistem Bengkel </title>
+  <title>SALIM MOTOR - Sistem Bengkel Firebase Realtime</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     @media print {
-      header, .nav-btn, button, #modal-edit-item { display: none !important; }
+      header, .nav-btn, button, #modal-edit-item, .no-print { display: none !important; }
       body { background: white !important; color: black !important; }
       main { padding: 0 !important; max-width: 100% !important; }
       #tab-laporan { display: block !important; box-shadow: none !important; padding: 0 !important; }
@@ -21,7 +21,7 @@
 </head>
 <body class="bg-slate-100 text-slate-800 font-sans min-h-screen flex flex-col">
 
-  <!-- Header / Navbar (Mobile-Friendly & Desktop) -->
+  <!-- Header / Navbar -->
   <header class="bg-slate-900 text-white p-3 sm:p-4 shadow-lg sticky top-0 z-20">
     <div class="max-w-[95rem] mx-auto flex flex-col md:flex-row justify-between items-center gap-3">
       <div class="flex items-center space-x-3 w-full md:w-auto justify-between md:justify-start">
@@ -34,10 +34,10 @@
         </div>
       </div>
 
-      <!-- Navigation Grid di HP, Flex di Desktop -->
+      <!-- Navigation Grid -->
       <div class="grid grid-cols-2 sm:grid-cols-4 md:flex gap-2 w-full md:w-auto">
         <button onclick="switchTab('pos')" class="nav-btn bg-emerald-600 hover:bg-emerald-500 text-center py-2 px-3 rounded-lg text-xs sm:text-sm font-semibold transition shadow">Kasir (POS)</button>
-        <button onclick="switchTab('laporan')" class="nav-btn bg-slate-800 hover:bg-slate-700 text-center py-2 px-3 rounded-lg text-xs sm:text-sm font-semibold transition border border-slate-700">Laporan Harian</button>
+        <button onclick="switchTab('laporan')" class="nav-btn bg-slate-800 hover:bg-slate-700 text-center py-2 px-3 rounded-lg text-xs sm:text-sm font-semibold transition border border-slate-700">Laporan Transaksi</button>
         <button onclick="switchTab('stok')" class="nav-btn bg-slate-800 hover:bg-slate-700 text-center py-2 px-3 rounded-lg text-xs sm:text-sm font-semibold transition border border-slate-700">Stok & Jasa</button>
         <button onclick="switchTab('mekanik')" class="nav-btn bg-slate-800 hover:bg-slate-700 text-center py-2 px-3 rounded-lg text-xs sm:text-sm font-semibold transition border border-slate-700">Master Mekanik</button>
       </div>
@@ -165,16 +165,42 @@
       </div>
     </section>
 
-    <!-- TAB 2: LAPORAN HARIAN -->
+    <!-- TAB 2: LAPORAN -->
     <section id="tab-laporan" class="bg-white p-4 sm:p-6 rounded-xl shadow-sm hidden space-y-4">
-      <div class="flex flex-wrap justify-between items-center border-b pb-3 gap-2">
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b pb-3 gap-3">
         <div>
-          <h2 class="text-md sm:text-lg font-bold text-slate-800">Laporan Transaksi Harian</h2>
-          <p class="text-xs text-slate-500">Rincian pendapatan, HPP modal, dan keutungan bengkel</p>
+          <h2 class="text-md sm:text-lg font-bold text-slate-800">Laporan Transaksi & Keuangan</h2>
+          <p class="text-xs text-slate-500">Filter transaksi harian atau rekap total bulanan</p>
         </div>
-        <div class="flex gap-2 w-full sm:w-auto">
-          <button onclick="exportToCSV()" class="flex-1 sm:flex-none bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-emerald-600">📥 Export CSV</button>
-          <button onclick="window.print()" class="flex-1 sm:flex-none bg-slate-800 text-white px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-slate-700">🖨️ Cetak</button>
+        <div class="flex flex-wrap gap-2 w-full md:w-auto no-print">
+          <button onclick="exportToCSV()" class="bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-emerald-600">📥 Export CSV</button>
+          <button onclick="window.print()" class="bg-slate-800 text-white px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-slate-700">🖨️ Cetak</button>
+        </div>
+      </div>
+
+      <div class="bg-slate-50 p-3 sm:p-4 rounded-xl border border-slate-200 space-y-3 no-print">
+        <div class="flex flex-wrap items-center gap-2 sm:gap-4">
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-bold text-slate-600">Filter:</span>
+            <select id="filter-mode" onchange="handleFilterModeChange()" class="p-2 border rounded-lg text-xs font-semibold bg-white">
+              <option value="daily">Per Hari (Harian)</option>
+              <option value="monthly">Per Bulan (Bulanan)</option>
+              <option value="all">Semua Data</option>
+            </select>
+          </div>
+
+          <div id="filter-daily-container" class="flex items-center gap-2">
+            <input type="date" id="filter-date" onchange="renderLaporan()" class="p-1.5 border rounded-lg text-xs font-semibold bg-white">
+            <button onclick="setToToday()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-2.5 py-1.5 rounded-lg text-xs font-bold">Hari Ini</button>
+          </div>
+
+          <div id="filter-monthly-container" class="hidden flex items-center gap-2">
+            <input type="month" id="filter-month" onchange="renderLaporan()" class="p-1.5 border rounded-lg text-xs font-semibold bg-white">
+          </div>
+
+          <div class="text-xs font-semibold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200 ml-auto" id="filter-info">
+            Menampilkan data harian
+          </div>
         </div>
       </div>
 
@@ -182,7 +208,7 @@
         <table class="w-full text-left text-xs border-collapse">
           <thead>
             <tr class="bg-slate-900 text-white uppercase">
-              <th class="p-3">Nota / Jam</th>
+              <th class="p-3">Nota / Tanggal</th>
               <th class="p-3">Plat / Pelanggan</th>
               <th class="p-3">Mekanik</th>
               <th class="p-3">Rincian Jasa</th>
@@ -193,13 +219,13 @@
               <th class="p-3 text-right text-teal-300">Laba Part</th>
               <th class="p-3 text-right text-amber-300">Komisi Mekanik</th>
               <th class="p-3 text-right">Grand Total</th>
-              <th class="p-3 text-center">Aksi</th>
+              <th class="p-3 text-center no-print">Aksi</th>
             </tr>
           </thead>
           <tbody id="laporan-table-body" class="divide-y divide-slate-200"></tbody>
           <tfoot class="bg-slate-100 font-bold border-t-2 border-slate-800 text-slate-900">
             <tr>
-              <td colspan="4" class="p-3 text-right uppercase">TOTAL KESELURUHAN:</td>
+              <td colspan="4" class="p-3 text-right uppercase">TOTAL PERIODE INI:</td>
               <td id="foot-total-jasa" class="p-3 text-right text-blue-600">Rp 0</td>
               <td class="p-3"></td>
               <td id="foot-total-hpp" class="p-3 text-right text-rose-600">Rp 0</td>
@@ -207,7 +233,7 @@
               <td id="foot-total-laba" class="p-3 text-right text-teal-600">Rp 0</td>
               <td id="foot-total-komisi" class="p-3 text-right text-amber-600">Rp 0</td>
               <td id="foot-grand-total" class="p-3 text-right text-emerald-600 font-black text-sm">Rp 0</td>
-              <td class="p-3"></td>
+              <td class="p-3 no-print"></td>
             </tr>
           </tfoot>
         </table>
@@ -301,55 +327,211 @@
     </div>
   </div>
 
-  <!-- INTEGRASI FIREBASE & KODE SISTEM -->
+  <!-- FIREBASE MODULE SCRIPT -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { 
+      getFirestore, collection, onSnapshot, addDoc, doc, updateDoc, deleteDoc, writeBatch 
+    } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-    // Konfigurasi Firebase dari proyek Anda
+    // --- PASTE KONFIGURASI FIREBASE ANDA DI SINI ---
     const firebaseConfig = {
-      apiKey: "AIzaSyBuDJBMCiZrS5bffHxNwCFZrgeaTSyesqs",
-      authDomain: "salimmotor-57409.firebaseapp.com",
-      projectId: "salimmotor-57409",
-      storageBucket: "salimmotor-57409.firebasestorage.app",
-      messagingSenderId: "83565139973",
-      appId: "1:83565139973:web:d2771a6d0f7b73b05b646c",
-      measurementId: "G-C5XS8MWRXZ"
+      apiKey: "AIzaSyCUXYyNT_st6hnyLM4acj_q4vLZR1z7Y-E",
+      authDomain: "salimmotor10.firebaseapp.com",
+      projectId: "salimmotor10",
+      storageBucket: "salimmotor10.firebasestorage.app",
+      messagingSenderId: "947060258698",
+      appId: "1:947060258698:web:f456cbf28998cef219ba73"
     };
 
-    // Inisialisasi Firebase App
     const app = initializeApp(firebaseConfig);
-    console.log("Firebase berhasil diinisialisasi untuk Salim Motor!");
+    const db = getFirestore(app);
+
+    // Global arrays untuk menyimpan data dari Firebase realtime
+    window.masterJasa = [];
+    window.masterPart = [];
+    window.masterMekanik = [];
+    window.transactions = [];
+    window.cart = [];
+
+    // --- SINKRONISASI REALTIME FIRESTORE ---
+    onSnapshot(collection(db, "jasa"), (snapshot) => {
+      window.masterJasa = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      window.renderAll();
+    });
+
+    onSnapshot(collection(db, "part"), (snapshot) => {
+      window.masterPart = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      window.renderAll();
+    });
+
+    onSnapshot(collection(db, "mekanik"), (snapshot) => {
+      window.masterMekanik = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      window.renderAll();
+    });
+
+    onSnapshot(collection(db, "transactions"), (snapshot) => {
+      window.transactions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      // Urutkan transaksi dari yang terbaru
+      window.transactions.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+      window.renderLaporan();
+    });
+
+    // Operasi Database Firebase
+    window.addMasterJasa = async function() {
+      const name = document.getElementById('new-jasa-name').value.trim();
+      const price = parseFloat(document.getElementById('new-jasa-price').value);
+      if (!name || isNaN(price) || price <= 0) return alert('Isi nama jasa dan harga dengan benar!');
+      
+      await addDoc(collection(db, "jasa"), { name, price });
+      document.getElementById('new-jasa-name').value = '';
+      document.getElementById('new-jasa-price').value = '';
+    };
+
+    window.addMasterPart = async function() {
+      const name = document.getElementById('new-part-name').value.trim();
+      const costPrice = parseFloat(document.getElementById('new-part-cost').value) || 0;
+      const price = parseFloat(document.getElementById('new-part-price').value);
+      const stock = parseInt(document.getElementById('new-part-stock').value);
+      if (!name || isNaN(price) || isNaN(stock)) return alert('Isi data sparepart dengan benar!');
+
+      await addDoc(collection(db, "part"), { name, costPrice, price, stock });
+      document.getElementById('new-part-name').value = '';
+      document.getElementById('new-part-cost').value = '';
+      document.getElementById('new-part-price').value = '';
+      document.getElementById('new-part-stock').value = '';
+    };
+
+    window.addMasterMekanik = async function() {
+      const name = document.getElementById('new-mekanik-name').value.trim();
+      const rate = parseFloat(document.getElementById('new-mekanik-rate').value);
+      if (!name || isNaN(rate)) return alert('Isi nama mekanik dan persentase komisi!');
+
+      await addDoc(collection(db, "mekanik"), { name, rate });
+      document.getElementById('new-mekanik-name').value = '';
+      document.getElementById('new-mekanik-rate').value = '30';
+    };
+
+    window.saveItemChanges = async function() {
+      const type = document.getElementById('edit-item-type').value;
+      const id = document.getElementById('edit-item-id').value;
+
+      if (type === 'jasa') {
+        const name = document.getElementById('edit-field-1').value;
+        const price = parseFloat(document.getElementById('edit-field-2').value) || 0;
+        await updateDoc(doc(db, "jasa", id), { name, price });
+      } else {
+        const name = document.getElementById('edit-field-1').value;
+        const costPrice = parseFloat(document.getElementById('edit-field-2').value) || 0;
+        const price = parseFloat(document.getElementById('edit-field-3').value) || 0;
+        const stock = parseInt(document.getElementById('edit-field-4').value) || 0;
+        await updateDoc(doc(db, "part", id), { name, costPrice, price, stock });
+      }
+
+      window.closeEditItemModal();
+    };
+
+    window.deleteMasterItem = async function(collectionName, id) {
+      if (!confirm('Hapus data ini dari database?')) return;
+      await deleteDoc(doc(db, collectionName, id));
+    };
+
+    window.saveTransaction = async function() {
+      const plateInput = document.getElementById('cust-plate').value.trim();
+      const nameInput = document.getElementById('cust-name').value.trim();
+      const wa = document.getElementById('cust-wa').value.trim();
+      const mId = document.getElementById('select-mekanik').value;
+      const payment = document.getElementById('payment-method').value;
+
+      if (window.cart.length === 0) return alert('Keranjang pengerjaan/part masih kosong!');
+      if (!plateInput && !nameInput) return alert('Mohon isi minimal Plat Nomor atau Nama Pelanggan!');
+
+      const mekanik = window.masterMekanik.find(m => m.id === mId);
+      const batch = writeBatch(db);
+
+      // Potong Stok di Firebase
+      window.cart.forEach(item => {
+        if (item.type === 'product') {
+          const p = window.masterPart.find(x => x.id === item.id);
+          if (p) {
+            const newStock = (p.stock || 0) - item.qty;
+            batch.update(doc(db, "part", item.id), { stock: newStock });
+          }
+        }
+      });
+
+      const totalService = window.cart.filter(c => c.type === 'service').reduce((a, b) => a + (b.price * b.qty), 0);
+      const totalProduct = window.cart.filter(c => c.type === 'product').reduce((a, b) => a + (b.price * b.qty), 0);
+      const totalCostProduct = window.cart.filter(c => c.type === 'product').reduce((a, b) => a + ((b.costPrice || 0) * b.qty), 0);
+      const mekanikCommission = mekanik ? ((totalService * mekanik.rate) / 100) : 0;
+
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const dateISO = `${year}-${month}-${day}`;
+      const timeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+
+      const newTrxRef = doc(collection(db, "transactions"));
+      batch.set(newTrxRef, {
+        invoice: 'SM-' + Date.now().toString().slice(-6),
+        date: dateISO,
+        time: timeStr,
+        createdAt: Date.now(),
+        plate: plateInput ? plateInput.toUpperCase() : 'TANPA PLAT',
+        name: nameInput || 'Pelanggan Umum',
+        wa: wa || '-',
+        mekanikName: mekanik ? mekanik.name : '-',
+        mekanikCommission: mekanikCommission,
+        payment: payment,
+        items: [...window.cart],
+        totalService: totalService,
+        totalProduct: totalProduct,
+        totalCostProduct: totalCostProduct,
+        grandTotal: totalService + totalProduct
+      });
+
+      await batch.commit();
+      window.resetCartForm();
+      alert('Transaksi berhasil disimpan ke Firebase!');
+    };
+
+    window.deleteTransaction = async function(id) {
+      if (!confirm('Hapus transaksi ini? Stok barang akan dikembalikan ke Firebase.')) return;
+      const trx = window.transactions.find(t => t.id === id);
+      if (!trx) return;
+
+      const batch = writeBatch(db);
+
+      // Kembalikan stok
+      trx.items.forEach(item => {
+        if (item.type === 'product') {
+          const p = window.masterPart.find(x => x.id === item.id);
+          if (p) {
+            batch.update(doc(db, "part", item.id), { stock: (p.stock || 0) + item.qty });
+          }
+        }
+      });
+
+      batch.delete(doc(db, "transactions", id));
+      await batch.commit();
+    };
   </script>
 
+  <!-- UI & EVENT LISTENERS SCRIPT -->
   <script>
-    // State Management
-    let masterJasa = JSON.parse(localStorage.getItem('sm_jasa_v4')) || [
-      { id: 1, name: 'Servis Ringan / Tune Up', price: 50000 },
-      { id: 2, name: 'Servis CVT Complete', price: 75000 },
-      { id: 3, name: 'Ganti Kampas Rem', price: 20000 }
-    ];
-
-    let masterPart = JSON.parse(localStorage.getItem('sm_part_v4')) || [
-      { id: 1, name: 'Oli Shell AX7 1L', costPrice: 52000, price: 65000, stock: 12 },
-      { id: 2, name: 'Kampas Rem Depan Honda', costPrice: 25000, price: 35000, stock: 8 },
-      { id: 3, name: 'Roller Set Vario 150', costPrice: 48000, price: 65000, stock: 2 }
-    ];
-
-    let masterMekanik = JSON.parse(localStorage.getItem('sm_mekanik_v4')) || [
-      { id: 1, name: 'Budi (Senior)', rate: 35 },
-      { id: 2, name: 'Agus', rate: 30 }
-    ];
-
-    let transactions = JSON.parse(localStorage.getItem('sm_trx_v4')) || [];
-    let cart = [];
-
-    function saveState() {
-      localStorage.setItem('sm_jasa_v4', JSON.stringify(masterJasa));
-      localStorage.setItem('sm_part_v4', JSON.stringify(masterPart));
-      localStorage.setItem('sm_mekanik_v4', JSON.stringify(masterMekanik));
-      localStorage.setItem('sm_trx_v4', JSON.stringify(transactions));
-      renderAll();
+    function getTodayISO() {
+      const today = new Date();
+      const year = today.getFullYear();
+      const month = String(today.getMonth() + 1).padStart(2, '0');
+      const day = String(today.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
     }
+
+    function getTodayMonthISO() { return getTodayISO().slice(0, 7); }
+
+    document.getElementById('filter-date').value = getTodayISO();
+    document.getElementById('filter-month').value = getTodayMonthISO();
 
     function switchTab(tab) {
       ['pos', 'laporan', 'stok', 'mekanik'].forEach(t => document.getElementById(`tab-${t}`).classList.add('hidden'));
@@ -365,49 +547,42 @@
       const sp = document.getElementById('select-part');
       const sm = document.getElementById('select-mekanik');
 
-      sj.innerHTML = '<option value="">-- Pilih Jasa --</option>' + masterJasa.map(j => `<option value="${j.id}">${j.name} (${formatRp(j.price)})</option>`).join('');
-      sp.innerHTML = '<option value="">-- Pilih Part --</option>' + masterPart.map(p => `<option value="${p.id}">${p.name} - Stok:${p.stock} (${formatRp(p.price)})</option>`).join('');
-      sm.innerHTML = '<option value="">-- Pilih Mekanik --</option>' + masterMekanik.map(m => `<option value="${m.id}">${m.name} (${m.rate}%)</option>`).join('');
+      sj.innerHTML = '<option value="">-- Pilih Jasa --</option>' + window.masterJasa.map(j => `<option value="${j.id}">${j.name} (${formatRp(j.price)})</option>`).join('');
+      sp.innerHTML = '<option value="">-- Pilih Part --</option>' + window.masterPart.map(p => `<option value="${p.id}">${p.name} - Stok:${p.stock} (${formatRp(p.price)})</option>`).join('');
+      sm.innerHTML = '<option value="">-- Pilih Mekanik --</option>' + window.masterMekanik.map(m => `<option value="${m.id}">${m.name} (${m.rate}%)</option>`).join('');
     }
 
-    // --- POS CART ---
     function addServiceToCart() {
-      const id = parseInt(document.getElementById('select-jasa').value);
-      const item = masterJasa.find(j => j.id === id);
+      const id = document.getElementById('select-jasa').value;
+      const item = window.masterJasa.find(j => j.id === id);
       if (!item) return;
-      cart.push({ type: 'service', id: item.id, name: item.name, price: item.price, qty: 1 });
+      window.cart.push({ type: 'service', id: item.id, name: item.name, price: item.price, qty: 1 });
       renderCart();
     }
 
     function addPartToCart() {
-      const id = parseInt(document.getElementById('select-part').value);
-      const item = masterPart.find(p => p.id === id);
+      const id = document.getElementById('select-part').value;
+      const item = window.masterPart.find(p => p.id === id);
       if (!item) return;
 
-      const existing = cart.find(c => c.type === 'product' && c.id === item.id);
+      const existing = window.cart.find(c => c.type === 'product' && c.id === item.id);
       const currentQty = existing ? existing.qty : 0;
 
-      if (currentQty + 1 > item.stock) {
-        alert('Stok barang tidak mencukupi!');
-        return;
-      }
+      if (currentQty + 1 > item.stock) return alert('Stok barang tidak mencukupi!');
 
       if (existing) existing.qty += 1;
-      else cart.push({ type: 'product', id: item.id, name: item.name, costPrice: item.costPrice || 0, price: item.price, qty: 1 });
+      else window.cart.push({ type: 'product', id: item.id, name: item.name, costPrice: item.costPrice || 0, price: item.price, qty: 1 });
       renderCart();
     }
 
     function updateCartQty(index, delta) {
-      const item = cart[index];
+      const item = window.cart[index];
       if (item.type === 'product') {
-        const p = masterPart.find(x => x.id === item.id);
-        if (delta > 0 && item.qty + delta > p.stock) {
-          alert('Stok barang tidak mencukupi!');
-          return;
-        }
+        const p = window.masterPart.find(x => x.id === item.id);
+        if (delta > 0 && item.qty + delta > p.stock) return alert('Stok barang tidak mencukupi!');
       }
       item.qty += delta;
-      if (item.qty <= 0) cart.splice(index, 1);
+      if (item.qty <= 0) window.cart.splice(index, 1);
       renderCart();
     }
 
@@ -415,10 +590,10 @@
       const tbody = document.getElementById('cart-table-body');
       let totalJasa = 0, totalPart = 0;
 
-      if (cart.length === 0) {
+      if (window.cart.length === 0) {
         tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-slate-400">Belum ada item ditambahkan</td></tr>';
       } else {
-        tbody.innerHTML = cart.map((item, idx) => {
+        tbody.innerHTML = window.cart.map((item, idx) => {
           const subtotal = item.price * item.qty;
           if (item.type === 'service') totalJasa += subtotal;
           else totalPart += subtotal;
@@ -434,14 +609,14 @@
                 <button onclick="updateCartQty(${idx}, 1)" class="px-1.5 bg-slate-200 rounded font-bold">+</button>
               </td>
               <td class="p-2 sm:p-3 text-right font-bold text-xs sm:text-sm">${formatRp(subtotal)}</td>
-              <td class="p-2 sm:p-3 text-center"><button onclick="cart.splice(${idx},1); renderCart();" class="text-red-500 font-bold">✕</button></td>
+              <td class="p-2 sm:p-3 text-center"><button onclick="window.cart.splice(${idx},1); renderCart();" class="text-red-500 font-bold">✕</button></td>
             </tr>
           `;
         }).join('');
       }
 
-      const mId = parseInt(document.getElementById('select-mekanik').value);
-      const melek = masterMekanik.find(m => m.id === mId);
+      const mId = document.getElementById('select-mekanik').value;
+      const melek = window.masterMekanik.find(m => m.id === mId);
       const komisi = melek ? (totalJasa * melek.rate / 100) : 0;
 
       document.getElementById('cart-total-jasa').innerText = formatRp(totalJasa);
@@ -452,57 +627,8 @@
 
     document.getElementById('select-mekanik').addEventListener('change', renderCart);
 
-    function saveTransaction() {
-      const plateInput = document.getElementById('cust-plate').value.trim();
-      const nameInput = document.getElementById('cust-name').value.trim();
-      const wa = document.getElementById('cust-wa').value.trim();
-      const mId = parseInt(document.getElementById('select-mekanik').value);
-      const payment = document.getElementById('payment-method').value;
-
-      const mekanik = masterMekanik.find(m => m.id === mId);
-
-      if (cart.length === 0 && !plateInput && !nameInput) {
-        alert('Mohon isi data plat nomor/nama atau tambahkan item ke keranjang!');
-        return;
-      }
-
-      cart.forEach(item => {
-        if (item.type === 'product') {
-          const p = masterPart.find(x => x.id === item.id);
-          if (p) p.stock -= item.qty;
-        }
-      });
-
-      const totalService = cart.filter(c => c.type === 'service').reduce((a, b) => a + (b.price * b.qty), 0);
-      const totalProduct = cart.filter(c => c.type === 'product').reduce((a, b) => a + (b.price * b.qty), 0);
-      const totalCostProduct = cart.filter(c => c.type === 'product').reduce((a, b) => a + ((b.costPrice || 0) * b.qty), 0);
-      
-      const mekanikCommission = mekanik ? ((totalService * mekanik.rate) / 100) : 0;
-
-      const newTrx = {
-        invoice: 'SM-' + Date.now().toString().slice(-6),
-        date: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
-        plate: plateInput ? plateInput.toUpperCase() : 'TANPA PLAT',
-        name: nameInput || 'Pelanggan Umum',
-        wa: wa || '-',
-        mekanikName: mekanik ? mekanik.name : '-',
-        mekanikCommission: mekanikCommission,
-        payment: payment,
-        items: [...cart],
-        totalService: totalService,
-        totalProduct: totalProduct,
-        totalCostProduct: totalCostProduct,
-        grandTotal: totalService + totalProduct
-      };
-
-      transactions.unshift(newTrx);
-      saveState();
-      resetCartForm();
-      alert('Transaksi berhasil disimpan!');
-    }
-
     function resetCartForm() {
-      cart = [];
+      window.cart = [];
       document.getElementById('cust-plate').value = '';
       document.getElementById('cust-name').value = '';
       document.getElementById('cust-wa').value = '';
@@ -510,18 +636,48 @@
       renderCart();
     }
 
-    // --- LAPORAN HARIAN ---
+    function handleFilterModeChange() {
+      const mode = document.getElementById('filter-mode').value;
+      document.getElementById('filter-daily-container').classList.toggle('hidden', mode !== 'daily');
+      document.getElementById('filter-monthly-container').classList.toggle('hidden', mode !== 'monthly');
+      renderLaporan();
+    }
+
+    function setToToday() {
+      document.getElementById('filter-date').value = getTodayISO();
+      renderLaporan();
+    }
+
+    function getFilteredTransactions() {
+      const mode = document.getElementById('filter-mode').value;
+      const selectedDate = document.getElementById('filter-date').value;
+      const selectedMonth = document.getElementById('filter-month').value;
+      const infoBox = document.getElementById('filter-info');
+
+      if (mode === 'daily') {
+        infoBox.innerText = `Menampilkan Transaksi Harian: ${selectedDate || 'Semua'}`;
+        return window.transactions.filter(t => (t.date || '') === selectedDate);
+      } else if (mode === 'monthly') {
+        infoBox.innerText = `Menampilkan Rekap Bulanan: ${selectedMonth || 'Semua'}`;
+        return window.transactions.filter(t => (t.date || '').startsWith(selectedMonth));
+      } else {
+        infoBox.innerText = `Menampilkan Semua Riwayat Transaksi`;
+        return window.transactions;
+      }
+    }
+
     function renderLaporan() {
       const tbody = document.getElementById('laporan-table-body');
       const mobileCards = document.getElementById('laporan-mobile-cards');
+      const filtered = getFilteredTransactions();
       
       let grandTotalJasa = 0, grandTotalHPP = 0, grandTotalJual = 0, grandTotalLaba = 0, grandTotalKomisi = 0, grandTotalOmzet = 0;
 
-      if (transactions.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="12" class="p-4 text-center text-slate-400">Belum ada transaksi</td></tr>';
-        mobileCards.innerHTML = '<div class="p-4 text-center text-slate-400 bg-white rounded-xl border">Belum ada transaksi</div>';
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="12" class="p-4 text-center text-slate-400 font-semibold">Tidak ada transaksi pada periode ini</td></tr>';
+        mobileCards.innerHTML = '<div class="p-4 text-center text-slate-400 bg-white rounded-xl border font-semibold">Tidak ada transaksi pada periode ini</div>';
       } else {
-        tbody.innerHTML = transactions.map((trx, idx) => {
+        tbody.innerHTML = filtered.map((trx) => {
           const jasaList = trx.items.filter(i => i.type === 'service').map(i => `• ${i.name}`).join('<br>') || '-';
           const partList = trx.items.filter(i => i.type === 'product').map(i => `• ${i.name} (${i.qty}x)`).join('<br>') || '-';
           const labaPart = (trx.totalProduct || 0) - (trx.totalCostProduct || 0);
@@ -535,7 +691,7 @@
 
           return `
             <tr class="hover:bg-slate-50 border-b">
-              <td class="p-3 font-mono font-bold text-slate-700">${trx.invoice}<br><span class="text-[10px] text-slate-400">${trx.date}</span></td>
+              <td class="p-3 font-mono font-bold text-slate-700">${trx.invoice}<br><span class="text-[10px] text-slate-400">${trx.date} (${trx.time || ''})</span></td>
               <td class="p-3"><span class="font-extrabold text-slate-900">${trx.plate}</span><br><span class="text-[10px] text-slate-500">${trx.name}</span></td>
               <td class="p-3 font-semibold text-slate-700">${trx.mekanikName || '-'}</td>
               <td class="p-3 text-[11px]">${jasaList}</td>
@@ -546,14 +702,14 @@
               <td class="p-3 text-right text-teal-600 font-bold bg-teal-50/50">${formatRp(labaPart)}</td>
               <td class="p-3 text-right text-amber-600 font-bold">${formatRp(trx.mekanikCommission || 0)}</td>
               <td class="p-3 text-right font-extrabold text-emerald-600">${formatRp(trx.grandTotal)}</td>
-              <td class="p-3 text-center">
-                <button onclick="deleteTransaction(${idx})" class="bg-red-500 hover:bg-red-600 text-white p-1 rounded text-xs">🗑️</button>
+              <td class="p-3 text-center no-print">
+                <button onclick="window.deleteTransaction('${trx.id}')" class="bg-red-500 hover:bg-red-600 text-white p-1 rounded text-xs">🗑️</button>
               </td>
             </tr>
           `;
         }).join('');
 
-        mobileCards.innerHTML = transactions.map((trx, idx) => {
+        mobileCards.innerHTML = filtered.map((trx) => {
           const labaPart = (trx.totalProduct || 0) - (trx.totalCostProduct || 0);
           return `
             <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-2 text-xs shadow-sm">
@@ -562,7 +718,7 @@
                   <span class="font-extrabold text-slate-900 text-sm">${trx.plate}</span>
                   <p class="text-[10px] text-slate-500">${trx.name} • ${trx.invoice} (${trx.date})</p>
                 </div>
-                <button onclick="deleteTransaction(${idx})" class="text-red-500 bg-red-100 px-2 py-0.5 rounded text-[10px] font-bold">Hapus</button>
+                <button onclick="window.deleteTransaction('${trx.id}')" class="text-red-500 bg-red-100 px-2 py-0.5 rounded text-[10px] font-bold">Hapus</button>
               </div>
               <div class="grid grid-cols-2 gap-1 text-[11px]">
                 <p><span class="text-slate-400">Mekanik:</span> <b>${trx.mekanikName}</b></p>
@@ -587,111 +743,58 @@
       document.getElementById('foot-total-laba').innerText = formatRp(grandTotalLaba);
       document.getElementById('foot-total-komisi').innerText = formatRp(grandTotalKomisi);
       document.getElementById('foot-grand-total').innerText = formatRp(grandTotalOmzet);
+
+      renderStats(filtered);
     }
 
-    // --- OTHER MASTER RENDERING ---
+    function renderStats(filteredList) {
+      const list = filteredList || window.transactions;
+      document.getElementById('stat-motor').innerText = `${list.length} Motor`;
+      document.getElementById('stat-jasa').innerText = formatRp(list.reduce((s, t) => s + (t.totalService || 0), 0));
+      document.getElementById('stat-part').innerText = formatRp(list.reduce((s, t) => s + (t.totalProduct || 0), 0));
+      document.getElementById('stat-hpp').innerText = formatRp(list.reduce((s, t) => s + (t.totalCostProduct || 0), 0));
+      document.getElementById('stat-profit-part').innerText = formatRp(list.reduce((s, t) => s + ((t.totalProduct || 0) - (t.totalCostProduct || 0)), 0));
+      document.getElementById('stat-total').innerText = formatRp(list.reduce((s, t) => s + (t.grandTotal || 0), 0));
+    }
+
     function renderMaster() {
-      document.getElementById('master-jasa-list').innerHTML = masterJasa.map((j, idx) => `
+      document.getElementById('master-jasa-list').innerHTML = window.masterJasa.map((j) => `
         <tr class="hover:bg-slate-50">
           <td class="p-2 sm:p-3 font-semibold">${j.name}</td>
           <td class="p-2 sm:p-3 text-right font-bold text-slate-700">${formatRp(j.price)}</td>
           <td class="p-2 sm:p-3 text-center">
-            <button onclick="openEditModal('jasa', ${j.id})" class="text-amber-600 font-semibold mr-1">Edit</button>
-            <button onclick="masterJasa.splice(${idx},1); saveState();" class="text-red-500 font-bold">Hapus</button>
+            <button onclick="openEditModal('jasa', '${j.id}')" class="text-amber-600 font-semibold mr-1">Edit</button>
+            <button onclick="window.deleteMasterItem('jasa', '${j.id}')" class="text-red-500 font-bold">Hapus</button>
           </td>
         </tr>
       `).join('');
 
-      document.getElementById('master-part-list').innerHTML = masterPart.map((p, idx) => `
+      document.getElementById('master-part-list').innerHTML = window.masterPart.map((p) => `
         <tr class="hover:bg-slate-50">
           <td class="p-2 sm:p-3 font-semibold">${p.name}</td>
           <td class="p-2 sm:p-3 text-right text-slate-500">${formatRp(p.costPrice || 0)}</td>
           <td class="p-2 sm:p-3 text-right font-bold text-slate-800">${formatRp(p.price)}</td>
           <td class="p-2 sm:p-3 text-center"><span class="px-1.5 py-0.5 rounded font-bold ${p.stock <= 3 ? 'bg-red-100 text-red-600' : 'bg-slate-100 text-slate-700'}">${p.stock}</span></td>
           <td class="p-2 sm:p-3 text-center">
-            <button onclick="openEditModal('part', ${p.id})" class="text-amber-600 font-semibold mr-1">Edit</button>
-            <button onclick="masterPart.splice(${idx},1); saveState();" class="text-red-500 font-bold">Hapus</button>
+            <button onclick="openEditModal('part', '${p.id}')" class="text-amber-600 font-semibold mr-1">Edit</button>
+            <button onclick="window.deleteMasterItem('part', '${p.id}')" class="text-red-500 font-bold">Hapus</button>
           </td>
         </tr>
       `).join('');
 
-      document.getElementById('master-mekanik-list').innerHTML = masterMekanik.map((m, idx) => `
+      document.getElementById('master-mekanik-list').innerHTML = window.masterMekanik.map((m) => `
         <tr class="hover:bg-slate-50">
           <td class="p-2 sm:p-3 font-semibold text-slate-800">${m.name}</td>
           <td class="p-2 sm:p-3 text-center font-bold text-amber-600">${m.rate}%</td>
-          <td class="p-2 sm:p-3 text-center"><button onclick="masterMekanik.splice(${idx},1); saveState();" class="text-red-500 font-bold">Hapus</button></td>
+          <td class="p-2 sm:p-3 text-center"><button onclick="window.deleteMasterItem('mekanik', '${m.id}')" class="text-red-500 font-bold">Hapus</button></td>
         </tr>
       `).join('');
-    }
-
-    function addMasterJasa() {
-      const name = document.getElementById('new-jasa-name').value.trim();
-      const price = parseFloat(document.getElementById('new-jasa-price').value);
-      if (!name || isNaN(price) || price <= 0) return alert('Isi data dengan benar!');
-      masterJasa.push({ id: Date.now(), name, price });
-      saveState();
-      document.getElementById('new-jasa-name').value = '';
-      document.getElementById('new-jasa-price').value = '';
-    }
-
-    function addMasterPart() {
-      const name = document.getElementById('new-part-name').value.trim();
-      const costPrice = parseFloat(document.getElementById('new-part-cost').value) || 0;
-      const price = parseFloat(document.getElementById('new-part-price').value);
-      const stock = parseInt(document.getElementById('new-part-stock').value);
-      if (!name || isNaN(price) || isNaN(stock)) return alert('Isi data dengan benar!');
-      masterPart.push({ id: Date.now(), name, costPrice, price, stock });
-      saveState();
-      document.getElementById('new-part-name').value = '';
-      document.getElementById('new-part-cost').value = '';
-      document.getElementById('new-part-price').value = '';
-      document.getElementById('new-part-stock').value = '';
-    }
-
-    function addMasterMekanik() {
-      const name = document.getElementById('new-mekanik-name').value.trim();
-      const rate = parseFloat(document.getElementById('new-mekanik-rate').value);
-      if (!name || isNaN(rate)) return alert('Isi data dengan benar!');
-      masterMekanik.push({ id: Date.now(), name, rate });
-      saveState();
-      document.getElementById('new-mekanik-name').value = '';
-      document.getElementById('new-mekanik-rate').value = '30';
-    }
-
-    function deleteTransaction(index) {
-      if (!confirm('Hapus transaksi ini? Stok barang akan dikembalikan.')) return;
-      const trx = transactions[index];
-      trx.items.forEach(item => {
-        if (item.type === 'product') {
-          const p = masterPart.find(x => x.id === item.id);
-          if (p) p.stock += item.qty;
-        }
-      });
-      transactions.splice(index, 1);
-      saveState();
-    }
-
-    function renderStats() {
-      const totalMotor = transactions.length;
-      const totalJasa = transactions.reduce((sum, t) => sum + (t.totalService || 0), 0);
-      const totalPart = transactions.reduce((sum, t) => sum + (t.totalProduct || 0), 0);
-      const totalHPP = transactions.reduce((sum, t) => sum + (t.totalCostProduct || 0), 0);
-      const totalProfitPart = totalPart - totalHPP;
-      const grandTotal = transactions.reduce((sum, t) => sum + (t.grandTotal || 0), 0);
-
-      document.getElementById('stat-motor').innerText = `${totalMotor} Motor`;
-      document.getElementById('stat-jasa').innerText = formatRp(totalJasa);
-      document.getElementById('stat-part').innerText = formatRp(totalPart);
-      document.getElementById('stat-hpp').innerText = formatRp(totalHPP);
-      document.getElementById('stat-profit-part').innerText = formatRp(totalProfitPart);
-      document.getElementById('stat-total').innerText = formatRp(grandTotal);
     }
 
     function renderAll() {
       populateDropdowns();
       renderMaster();
       renderLaporan();
-      renderStats();
     }
 
     function openEditModal(type, id) {
@@ -700,14 +803,14 @@
       const fields = document.getElementById('edit-item-fields');
 
       if (type === 'jasa') {
-        const item = masterJasa.find(j => j.id === id);
+        const item = window.masterJasa.find(j => j.id === id);
         document.getElementById('modal-edit-item-title').innerText = 'Edit Data Jasa';
         fields.innerHTML = `
           <div><label class="font-semibold text-slate-600">Nama Jasa</label><input type="text" id="edit-field-1" value="${item.name}" class="w-full p-2 border rounded-lg"></div>
           <div><label class="font-semibold text-slate-600">Tarif Jasa (Rp)</label><input type="number" id="edit-field-2" value="${item.price}" class="w-full p-2 border rounded-lg"></div>
         `;
       } else {
-        const item = masterPart.find(p => p.id === id);
+        const item = window.masterPart.find(p => p.id === id);
         document.getElementById('modal-edit-item-title').innerText = 'Edit Sparepart & Stok';
         fields.innerHTML = `
           <div><label class="font-semibold text-slate-600">Nama Barang</label><input type="text" id="edit-field-1" value="${item.name}" class="w-full p-2 border rounded-lg"></div>
@@ -723,43 +826,22 @@
 
     function closeEditItemModal() { document.getElementById('modal-edit-item').classList.add('hidden'); }
 
-    function saveItemChanges() {
-      const type = document.getElementById('edit-item-type').value;
-      const id = parseInt(document.getElementById('edit-item-id').value);
-
-      if (type === 'jasa') {
-        const item = masterJasa.find(j => j.id === id);
-        item.name = document.getElementById('edit-field-1').value;
-        item.price = parseFloat(document.getElementById('edit-field-2').value) || 0;
-      } else {
-        const item = masterPart.find(p => p.id === id);
-        item.name = document.getElementById('edit-field-1').value;
-        item.costPrice = parseFloat(document.getElementById('edit-field-2').value) || 0;
-        item.price = parseFloat(document.getElementById('edit-field-3').value) || 0;
-        item.stock = parseInt(document.getElementById('edit-field-4').value) || 0;
-      }
-
-      saveState();
-      closeEditItemModal();
-    }
-
     function exportToCSV() {
-      if (transactions.length === 0) return alert('Belum ada transaksi!');
-      let csv = 'Nota,Waktu,Plat,Pelanggan,Mekanik,Total Jasa,Modal Part (HPP),Jual Part,Laba Part,Komisi Mekanik,Grand Total,Metode Bayar\n';
-      transactions.forEach(t => {
+      const filtered = getFilteredTransactions();
+      if (filtered.length === 0) return alert('Belum ada transaksi pada filter ini!');
+      let csv = 'Nota,Tanggal,Jam,Plat,Pelanggan,Mekanik,Total Jasa,Modal Part (HPP),Jual Part,Laba Part,Komisi Mekanik,Grand Total,Metode Bayar\n';
+      filtered.forEach(t => {
         const labaPart = (t.totalProduct || 0) - (t.totalCostProduct || 0);
-        csv += `"${t.invoice}","${t.date}","${t.plate}","${t.name}","${t.mekanikName}",${t.totalService},${t.totalCostProduct || 0},${t.totalProduct},${labaPart},${t.mekanikCommission || 0},${t.grandTotal},"${t.payment}"\n`;
+        csv += `"${t.invoice}","${t.date}","${t.time || ''}","${t.plate}","${t.name}","${t.mekanikName}",${t.totalService},${t.totalCostProduct || 0},${t.totalProduct},${labaPart},${t.mekanikCommission || 0},${t.grandTotal},"${t.payment}"\n`;
       });
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
-      link.setAttribute('download', `Laporan_Salim_Motor_${new Date().toISOString().slice(0,10)}.csv`);
+      link.setAttribute('download', `Laporan_Salim_Motor_${getTodayISO()}.csv`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
     }
-
-    renderAll();
   </script>
 </body>
 </html>
